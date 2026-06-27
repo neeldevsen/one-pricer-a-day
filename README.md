@@ -1,1 +1,1 @@
-REFER TO THE PDF (you probably need to downloade it)
+REFER TO THE PDF (you probably need to download it)
