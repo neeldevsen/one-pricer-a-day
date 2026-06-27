@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cmath>
 #include <type_traits>
+<<<<<<< HEAD
 
 template <typename T>
 auto normalCDF(T x) -> std::common_type_t <double , T>
@@ -8,6 +9,9 @@ auto normalCDF(T x) -> std::common_type_t <double , T>
     using commonType = std::common_type_t<double, T>;
     return static_cast<commonType>(0.5) * (static_cast<commonType>(1) + std::erf(x / std::sqrt(2.0)));
 }
+=======
+#include "functions.hpp"
+>>>>>>> c0d9ced (Added Header file since I realised I will be using this more)
 
 template <typename SType, typename KType, typename rType, typename sigmaType, typename tType>
 auto blackScholesCall(SType S, KType K, rType r, sigmaType sigma, tType t) -> std::common_type_t<double, SType, KType, rType, sigmaType, tType>
