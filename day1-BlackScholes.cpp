@@ -57,26 +57,21 @@ int main()
     double S {};
     std::cin >> S;
 
-
     std::cout << "Input strike price: ";
     double K {};
     std::cin >> K;
-
 
     std::cout << "Input the risk-free rate of interest (yearly): ";
     double r {};
     std::cin >> r;
 
-
     std::cout << "Input implied volatility (yearly): ";
     double sigma {};
     std::cin >> sigma;
 
-
     std::cout << "Input time to maturity (years): ";
     double t {};
     std::cin >> t;
-
 
     std::cout << "Call price: $" << blackScholesCall(S,K,r,sigma,t) << '\n';
     std::cout << "Put price: $" << blackScholesPut(S,K,r,sigma,t) << '\n';
