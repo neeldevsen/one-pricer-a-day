@@ -1,0 +1,161 @@
+\documentclass[12pt]{article}
+
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
+\numberwithin{equation}{section}
+\usepackage{hyperref}
+
+\title{One Pricer a Day}
+\author{Neel Dev Sen}
+\date{July 2026}
+
+\lstdefinestyle{cpp}{
+	language=C++,
+	basicstyle=\ttfamily\small,
+	keywordstyle=\color{blue},
+	commentstyle=\color{gray},
+	stringstyle=\color{purple},
+	numbers=left,
+	numberstyle=\tiny\color{gray},
+	stepnumber=1,
+	frame=single,
+	breaklines=true,
+	showstringspaces=false
+	tabsize=4
+}
+
+\lstdefinestyle{python}{
+	language=Python,
+	basicstyle=\ttfamily\small,
+	keywordstyle=\color{blue},
+	commentstyle=\color{gray},
+	stringstyle=\color{purple},
+	numbers=left,
+	numberstyle=\tiny\color{gray},
+	stepnumber=1,
+	frame=single,
+	breaklines=true,
+	showstringspaces=false
+}
+
+\begin{document}
+	
+	\maketitle
+	\newpage
+	\tableofcontents
+	\newpage
+
+\section{Introduction}
+This is a project where I develop derivative pricers using \textbf{C++}. My goal is to do at least one a day and you can access all of my \href{https://github.com/neeldevsen/one-pricer-a-day}{Github Repo}
+\newpage
+\section{European Options}
+\subsection{Day 1: Black Scholes}
+The first option that I am going to be pricing is the European option using the closed-form Black-Scholes equation. \newline \newline In \textbf{Github} the full \textbf{C++} script is on this link:
+\href{https://github.com/neeldevsen/one-pricer-a-day/blob/main/day1-BlackScholes.cpp}{Day1-BlackScholesPricer}
+\subsubsection{The Black Scholes PDE}
+  The Black Scholes equation is a partial differential equation that is used to model how option prices change as the initial stock price, time to maturity, risk-free interest rate and implied volatility change. The partial differential equation is shown below:
+  \begin{equation} 
+  	\frac{\partial V}{\partial t} + \frac{1}{2} \sigma^2 S^2 \frac{\partial^2 V}{\partial S^2} + rS\frac{\partial V}{\partial S} - rV = 0
+ \end{equation} \newline
+ In this equation $V$ is the option's price, $\sigma$ is the implied volatility, $r$ is the risk-free rate of interest and $t$ is the time to maturity. \newline \newline $\frac{\partial V}{\partial t} $ is the rate of change of the option's price to time, $\frac{\partial V}{\partial S}$ is the rate of change of the option's price to the underlying stock price and  $\frac{\partial^2 V}{\partial S^2}$ is a concavity factor on how the option price changes with the stock price.  When solving the Black-Scholes there are two cases: when the option is a call option, or when the option is a put option.
+ \newpage
+ \subsubsection{Closed-Form Solution for European Call Options}
+ The closed-form solution for the Black-Scholes equation where the option is a call option is:
+ \begin{equation}
+ 	C(t,S) = S\Phi(d_1) - Ke^{-r(T-t)}\Phi(d_2)
+ 	\label{eq:2.2}
+ \end{equation}
+ where: 
+ \begin{equation*}
+ 	d_1 = \frac{\ln(\frac{S}{K}) + (r + \frac{1}{2}\sigma^2)(T-t)}{\sigma\sqrt{T-t}}
+ \end{equation*}
+  and:
+  \begin{equation*}
+  	d_2 = d_1 - \sigma\sqrt{T-t}
+  \end{equation*}
+  In this equation $T-t$ represents the time to maturity and $K$ represents the strike price. \newline \newline
+  $\Phi(z)$ is the standard normal cumulative distribution function which can be represented with the error function $\operatorname{erf}(z)$: 
+  \begin{equation}
+  	\Phi(z) = \frac{1}{2}(1 + \operatorname{erf}(\frac{z}{\sqrt{2}}))
+  	\label{eq:2.3}
+  \end{equation}
+ \newline In C++ this can be implemented as:
+  
+ \begin{lstlisting}[style=cpp]
+#include <iostream>
+#include <cmath>
+#include <type_traits>
+ 
+template <typename T>
+auto normalCDF(T x) -> std::common_type_t <double , T>
+{
+	using commonType = std::common_type_t<double, T>;
+	return static_cast<commonType>(0.5) * (static_cast<commonType>(1) + std::erf(x / std::sqrt(2.0)));
+}
+ \end{lstlisting}
+ The function we are creating is called \textbf{normalCDF}.This listing uses the \textbf{cmath} header file in order to import \textbf{std::erf}. It also uses a function template with a type placeholder \textbf{T} so that we can use this function for any type given. In order to ensure that this function has at least a type \textbf{double} we use the header file \textbf{type traits} which allows us to specify that we want this function to be at least double in line 6 trailing return type. In line 8 we ensure that the \textbf{commonType} alias used amongst all the literals and variables in this function are also at least of type \textbf{double}. This function returns the result shown in equation \ref{eq:2.3} with a type of at least \textbf{double}. 
+ \newpage
+ Now to implement the function shown in equation \ref{eq:2.2} in C++ we use: 
+ \begin{lstlisting}[style=cpp]
+ template <typename SType, typename KType, typename rType, typename sigmaType, typename tType>
+ auto blackScholesCall(SType S, KType K, rType r, sigmaType sigma, tType t) -> std::common_type_t<double, SType, KType, rType, sigmaType, tType>
+ {
+ 	using commonType = std::common_type_t<double, SType, KType, rType, sigmaType, tType>;
+ 	auto S_new {static_cast<commonType>(S)};
+ 	auto K_new {static_cast<commonType>(K)};
+ 	auto r_new {static_cast<commonType>(r)};
+ 	auto sigma_new {static_cast<commonType>(sigma)};
+ 	auto t_new {static_cast<commonType>(t)};
+ 		
+ 		
+ 	auto d1 {(std::log(S_new / K_new) + (r_new + 0.5 * sigma_new * sigma_new) * t_new) / (sigma_new * std::sqrt(t_new))};
+ 	auto d2 {d1 - sigma_new * std::sqrt(t_new)};
+ 		
+ 		
+ 	auto C {S_new * normalCDF(d1) - K_new * std::exp(-r_new * t_new) * normalCDF(d2)};
+ 	return C;
+ 	}
+ \end{lstlisting}
+ The function in this listing is called \textbf{blackScholesCall}. This listing again uses the same header files and the same principles as the one before and converts every thing into a \textbf{commonType} of at least type \textbf{double}. The formula for $d_1$ is shown in line 12 and the formula for $d_2$ is shown in line 13.  Finally the result in equation \ref{eq:2.2} is shown in line 16 using the previously defined function \textbf{normalCDF}. The function returns the value of the \textbf{call option} with at least type \textbf{double}. 
+ \newpage
+\subsubsection{Closed-Form Solution for European Put Options}
+ The closed-form solution for the Black-Scholes equation where the option is a put option is:
+\begin{equation}
+	P(t,S) = Ke^{-r(T-t)}\Phi(-d_2) - S\Phi(-d_1)
+	\label{eq:2.4}
+\end{equation}
+using the same definitions of $d_1$ and $d_2$ in \ref{eq:2.2} \newline
+The implementation of this in C++ is:
+
+ \begin{lstlisting}[style=cpp]
+template <typename SType, typename KType, typename rType, typename sigmaType, typename tType>
+auto blackScholesPut(SType S, KType K, rType r, sigmaType sigma, tType t) -> std::common_type_t<double, SType, KType, rType, sigmaType, tType>
+{
+	using commonType = std::common_type_t<double, SType, KType, rType, sigmaType, tType>;
+	auto S_new {static_cast<commonType>(S)};
+	auto K_new {static_cast<commonType>(K)};
+	auto r_new {static_cast<commonType>(r)};
+	auto sigma_new {static_cast<commonType>(sigma)};
+	auto t_new {static_cast<commonType>(t)};
+	
+	
+	auto d1 {(std::log(S_new / K_new) + (r_new + 0.5 * sigma_new * sigma_new) * t_new) / (sigma_new * std::sqrt(t_new))};
+	auto d2 {d1 - sigma_new * std::sqrt(t_new)};
+	
+	
+	auto P {K_new * std::exp(-r_new * t_new) * normalCDF(-d2) - S_new * normalCDF(-d1)};
+	return P;
+}
+\end{lstlisting}
+ The function in this listing is called \textbf{blackScholesPut}. This listing is almost identical to the one for \textbf{blackScholesCall}. The formula for $d_1$ is again shown in line 12 and the formula for $d_2$ is shown in line 13.  Finally the result in equation \ref{eq:2.4} is shown in line 16 using the function \textbf{normalCDF}. The function returns the value of the \textbf{put option} with at least type \textbf{double}. 
+\newpage
+\end{document}
