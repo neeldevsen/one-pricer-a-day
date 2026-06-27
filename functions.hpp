@@ -1,6 +1,10 @@
 #ifndef FUNCTIONS
 #define FUNCTIONS
 
+#include <iostream>
+#include <cmath>
+#include <type_traits>
+
 template <typename T>
 auto normalCDF(T x) -> std::common_type_t <double , T>
 {
